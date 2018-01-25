@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>demo-1</title>
+	<style>
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		.canvas-warp {
+			width: 1200px;
+			height: 550px;
+			margin: 10px auto 0;
+			padding: 10px;
+	    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+		}
+	</style>
+</head>
+<body>
+	<div class="canvas-warp">
+		<canvas id="canvas-el"></canvas>
+	</div>
+	<script src="../../dist/index.js"></script>
+	<script src="http://mockjs.com/dist/mock.js"></script>
+	<script src="./data.js"></script>
+	<script>
+		var options = {
+			// 刻度栏
+			scale: {
+				title: '杆号',
+				keyName: 'pole.poleName',
+				height: 30,
+			},
+			// 图表
+			chart: {
+				// 左偏移值
+				offsetLeft: 100,
+				// 图标高度
+				// tablesHeight: 370,
+				// 可设置为多个
+				tables: [
+				  {
+				  	title: '弓网温度',
+				  	keyName: 'tempVals',
+				  	fillStyle: '#ff00ff',
+				  	strokeStyle: '#999',
+				  	pointRadius: 5,
+				  	min: 0,
+				  	max: 101,
+				  },
+				  {
+				  	title: '弓网冲击加速度',
+				  	keyName: 'accelerations',
+				  	fillStyle: '#ff66ff',
+				  	strokeStyle: '#999',
+				  	pointRadius: 5,
+				  	min: 0,
+				  	max: 100,
+				  },
+				  {
+				  	title: '弓网冲击力',
+				  	keyName: 'wallops',
+				  	fillStyle: '#ff6666',
+				  	strokeStyle: '#999',
+				  	pointRadius: 5,
+				  	min: 0,
+				  	max: 100,
+				  },
+				],
+			},
+		};
+		var data = chratData.entity.content;
+		var chart = new Xmany('canvas-el', {
+			// 画板宽度
+			width: 1200,
+			// 画板高度
+			height: 550,
+		});
+		chart.draw(options, data)
+		console.log(chart);
+		console.log(data);
+	</script>
+</body>
+</html>
