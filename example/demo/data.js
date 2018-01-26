@@ -26,21 +26,21 @@ var MockData = Mock.mock({
         },
       ],
       // 弓网冲击力
-      "wallops|0-10": [
+      "wallops|0-5": [
         function () {
           // 正整数 0-100
           return Mock.mock('@integer(0, 100)')
         },
       ],
       // 弓网冲击加速度
-      "accelerations|0-10": [
+      "accelerations|0-8": [
         function () {
           // 正整数 0-100
           return Mock.mock('@integer(0, 100)')
         },
       ],
       // 弓网温度
-      "tempVals|0-10": [
+      "tempVals|0-6": [
         function () {
           // 浮点数
           return Mock.mock('@float(0, 100, 1, 3)')
