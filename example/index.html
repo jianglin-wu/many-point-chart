@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>demo-1</title>
+	<style>
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		.canvas-warp {
+      position: relative;
+			width: 1200px;
+			height: 550px;
+			margin: 10px auto 0;
+			padding: 10px;
+	    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+		}
+    .hover-bg {
+      position: absolute;
+      z-index: 0;
+      background: #ccc;
+      display: none;
+    }
+    canvas {
+      position: relative;
+      z-index: 1;
+    }
+    .details {
+      position: absolute;
+      z-index: 2;
+      top: 0;
+      left: 0;
+      display: none;
+      width: 100px;
+      min-height: 30px;
+      background: #eee;
+      border-radius: 10%;
+      padding: 10px;
+    }
+    .details h3 {
+      font-size: 14px;
+    }
+	</style>
+</head>
+<body>
+	<div class="canvas-warp">
+    <canvas id="canvas-el"></canvas>
+    <div class="hover-bg" id="hover-bg"></div>
+    <div class="details" id="details">
+      <h3 class="title"></h3>
+      <div class="content"></div>
+    </div>
+	</div>
+  <!-- <script src="../../dist/index.js"></script> -->
+	<script src="./js/Xmany/index.js"></script>
+	<script src="./js/mock.js"></script>
+	<script src="./js/data.js"></script>
+	<script>
+		var options = {
+			// 刻度栏
+			scale: {
+				title: '杆号',
+				keyName: 'pole.poleName',
+				height: 30,
+			},
+			// 图表
+			chart: {
+				// 左偏移值
+				offsetLeft: 100,
+				// 图标高度
+				// tablesHeight: 0,
+				// 可设置为多个
+				tables: [
+				  {
+				  	title: '弓网温度',
+				  	keyName: 'tempVals',
+				  	fillStyle: '#ff00ff',
+				  	strokeStyle: '#999',
+				  	pointRadius: 5,
+				  	min: 0,
+				  	max: 101,
+				  },
+				  {
+				  	title: '弓网冲击加速度',
+				  	keyName: 'accelerations',
+				  	fillStyle: '#ff66ff',
+				  	strokeStyle: '#999',
+				  	pointRadius: 5,
+				  	min: 0,
+				  	max: 100,
+				  },
+				  {
+				  	title: '弓网冲击力',
+				  	keyName: 'wallops',
+				  	fillStyle: '#ff6666',
+				  	strokeStyle: '#999',
+				  	pointRadius: 5,
+				  	min: 0,
+				  	max: 100,
+				  },
+				],
+			},
+		};
+    // 模拟数据
+		var data = chratData.entity.content;
+		var chart = new Xmany('canvas-el', {
+			// 画板宽度
+			width: 1200,
+			// 画板高度
+			height: 550,
+		});
+    var hoverBg = document.getElementById('hover-bg');
+    var details = document.getElementById('details');
+		chart.draw(options, data);
+    // chart.on('pointMouseenter', () => {
+    //   chart.canvas.style.cursor = 'pointer'
+    // })
+    // chart.on('pointMouseleave', () => {
+    //   chart.canvas.style.cursor = 'default'
+    // })
+    chart.on('axisXMouseenter', function(e, coordinate, indexs) {
+      setBgLine(coordinate);
+      setDetails(e, coordinate, indexs);
+    });
+    chart.on('axisXMousemove', function(e, coordinate, indexs) {
+      setBgLine(coordinate);
+      setDetails(e, coordinate, indexs);
+    });
+    // chart.on('tableMouseenter', function() {
+    //   console.log('tableMouseenter')
+    // });
+    // chart.on('tableMousemove', function() {
+    //   console.log('tableMousemove')
+    // });
+    chart.on('axisXMouseout', hideEl);
+    chart.on('tableMouseleave', hideEl);
+
+    function hideEl() {
+      hoverBg.style.display = 'none';
+      details.style.display = 'none';
+    }
+    function setBgLine (coordinate) {
+      hoverBg.style.top = 10 + coordinate.y + 'px';
+      hoverBg.style.left = 10 + coordinate.x + 'px';
+      hoverBg.style.height = coordinate.h + 'px';
+      hoverBg.style.width = '1px';
+      hoverBg.style.display = 'block';
+    }
+    function setDetails(e, coordinate, indexs) {
+      details.style.display = 'block';
+      details.style.top = 10 + e.offsetY + 'px';
+      details.style.left = 10 + coordinate.x + (coordinate.w / 2) + 'px';
+      var item = data[indexs.xIndex];
+      var values = item[options.chart.tables[indexs.tableIndex].keyName];
+      var content = ''
+      for (var i = 0; i < values.length; i++) {
+        content += '<p>' + values[i] + '</p>';
+      }
+      details.getElementsByClassName('title')[0].innerHTML = item.pole.poleName;
+      details.getElementsByClassName('content')[0].innerHTML = content;
+    }
+	</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import { version, name } from '../package.json'
 import { logs } from './scripts/utils'
+import EventEmitter from './scripts/event-emitter.js'
 
 /**
  * 读取键名
@@ -102,6 +103,7 @@ function drawScale(ctx, location, parames) {
       ctx.fillText(name, offsetLeft, textTop, span * 0.8)
       XList.push({
         name,
+        span,
         offsetLeft,
       })
       offsetLeft += span
@@ -199,7 +201,7 @@ function drawTables(ctx, location, parames) {
       ctx.lineWidth = lineWidth
 
       ctx.beginPath()
-      const pointList = XList.map(({ name, offsetLeft }, xIndex) => {
+      const pointList = XList.map(({ name, span, offsetLeft }, xIndex) => {
         const x = offsetLeft
         let values = data[xIndex][keyName]
         const setLint = (value, index = 0) => {
@@ -219,7 +221,7 @@ function drawTables(ctx, location, parames) {
         } else {
           values = []
         }
-        return { name, values, x }
+        return { name, values, x, span }
       })
       ctx.stroke()
 
@@ -232,7 +234,7 @@ function drawTables(ctx, location, parames) {
           ctx.stroke()
         })
       })
-      return pointList
+      return { pointList, chartY, tableHeight }
     })
   }
 }
@@ -244,8 +246,9 @@ function setPercentageDefault(value, difference, min) {
   return (value - min) / difference
 }
 
-class Xmany {
+class Xmany extends EventEmitter {
   constructor (el, config) {
+    super()
     this.ctx = null
     this.options = null
     this.data = null
@@ -280,6 +283,7 @@ class Xmany {
     options.chart = (({ offsetLeft = 100, tables = [], tablesHeight = 0 }) => {
       const newChart = {}
       newChart.offsetLeft = offsetLeft
+      newChart.tablesHeight = tablesHeight
       newChart.tables = tables.map(({
         title = '表名', keyName = '', min = 0, max = 100,
         setPercentage = null, pointRadius = 6, pointRadian = 360 * Math.PI / 180,
@@ -330,6 +334,7 @@ class Xmany {
         tables,
         scaleTop,
     })(this.scaleList, data)
+    this.watchEvent()
     this.addEvent()
   }
 
@@ -339,35 +344,92 @@ class Xmany {
     ctx.clearRect(0, 0, width, height)
   }
 
-  addEvent () {
+  watchEvent () {
     const canvas = this.canvas
     const ctx = this.ctx
     const pointAllList = this.pointAllList
     const that = this
+    let isInPointPath = false
+    let isInAxisX = false
+    let isInTable = false
+    canvas.addEventListener('mouseenter', function(){
+      that.emit('mouseenter')
+    })
     canvas.addEventListener('mousemove', function(e){
-      let pointCount = 0
-      let pointTotal = 0
-      pointAllList.forEach((pointList, tableIndex) => {
-        pointList.forEach(({ values, x, name }) => {
-          values.forEach(({ y }) => {
+      let isThisInPointPath = false
+      let isThisInAxisX = false
+      let isThisInTable = false
+      that.emit('mousemove')
+      pointAllList.forEach(({ pointList, chartY, tableHeight }, tableIndex) => {
+        pointList.forEach(({ values, x, name, span }, xIndex) => {
+          const pointListWidth = (pointList.length + 1) * span
+          values.forEach(({ y }, valueIndex) => {
             if(that.inPointPath(x, y, e.offsetX, e.offsetY, tableIndex)) {
-              canvas.style.cursor = 'pointer'
-            } else {
-              pointCount++
+              if (isInPointPath) {
+                that.emit('pointMousemove', e, { x, y }, { tableIndex, xIndex, valueIndex })
+              } else {
+                that.emit('pointMouseenter', e, { x, y }, { tableIndex, xIndex, valueIndex })
+                isInPointPath = true
+              }
+              isThisInPointPath = true
             }
-            pointTotal++
+            if (that.inAxisX(x, chartY, span, tableHeight, e.offsetX, e.offsetY, tableIndex)) {
+              if (isInAxisX) {
+                that.emit(
+                  'axisXMousemove',
+                  e,
+                  { x, y: chartY, w: span, h: tableHeight },
+                  { tableIndex, xIndex },
+                )
+              } else {
+                that.emit(
+                  'axisXMouseenter',
+                  e,
+                  { x, y: chartY, w: span, h: tableHeight },
+                  { tableIndex, xIndex },
+                )
+                isInAxisX = true
+              }
+              isThisInAxisX = true
+            }
+            if (that.inTable(pointList[0].x - span, chartY, pointListWidth, tableHeight, e.offsetX, e.offsetY, tableIndex)) {
+              if (isInTable) {
+                that.emit(
+                  'tableMousemove',
+                  e,
+                  { x: pointList[0].x - span, y: chartY, w: pointListWidth, h: tableHeight },
+                  { tableIndex },
+                )
+              } else {
+                that.emit('tableMouseenter')
+                isInTable = true
+              }
+              isThisInTable = true
+            }
           })
         })
       })
 
-      // 如果没有触发到任何一个点上
-      if (pointCount === pointTotal) {
-        canvas.style.cursor = 'default'
+      // 从内部移出
+      if (!isThisInPointPath && isInPointPath) {
+        isInPointPath = false
+        that.emit('pointMouseleave')
+      }
+      if (!isThisInAxisX && isInAxisX) {
+        isInAxisX = false
+        that.emit('axisXMouseleave')
+      }
+      if (!isThisInTable && isInTable) {
+        isInTable = false
+        that.emit('tableMouseleave')
       }
     });
 
     canvas.addEventListener('mouseleave', function(){
-      console.log('mouseleave')
+      that.emit('mouseleave')
+      isInPointPath = false
+      isInAxisX = false
+      isInTable = false
     })
   }
 
@@ -395,10 +457,39 @@ class Xmany {
   inAxisX (x1, y1, span, h, x2, y2, tableIndex) {
     const ctx = this.ctx
     ctx.beginPath()
-    ctx.strokeRect(x1 - (span / 2), y1, span, h)
+    ctx.rect(x1 - (span / 2), y1, span, h)
     const ret = ctx.isPointInPath(x2, y2)
     ctx.closePath()
     return ret
+  }
+
+  /**
+   * 坐标是否单个表格中
+   * x1,y1 为点坐标位置
+   * x2,y2 为事件位置参数
+   */
+  inTable (x1, y1, w, h, x2, y2, tableIndex) {
+    const ctx = this.ctx
+    ctx.beginPath()
+    ctx.rect(x1, y1, w, h)
+    const ret = ctx.isPointInPath(x2, y2)
+    ctx.closePath()
+    return ret
+  }
+
+  addEvent () {
+    // this.on('pointMouseenter', () => {
+    //   this.canvas.style.cursor = 'pointer'
+    // })
+    // this.on('pointMouseleave', () => {
+    //   this.canvas.style.cursor = 'default'
+    // })
+    // this.on('pointMouseleave', () => {
+    //   this.ctx.beginPath()
+    //   this.ctx.moveTo(x, chartY)
+    //   this.ctx.lineTo(x, chartY + tableHeight)
+    //   this.ctx.stroke()
+    // })
   }
 }
 

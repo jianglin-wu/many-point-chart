@@ -1,3 +1,5 @@
+
+
 export function logs (type, message) {
   if (typeof type !== 'string' || console[type] === undefined) {
     console.error('Logs function "type" parameter invalid!')
