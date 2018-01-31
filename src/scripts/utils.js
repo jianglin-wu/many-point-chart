@@ -1,5 +1,4 @@
 
-
 export function logs (type, message) {
   if (typeof type !== 'string' || console[type] === undefined) {
     console.error('Logs function "type" parameter invalid!')
@@ -31,4 +30,23 @@ export function inherit(prototype) {
 export function defineSubClass(baseClassConstructor, subClassConstructor) {
   subClassConstructor.prototype = inherit(baseClassConstructor);
   subClassConstructor.prototype.constructor = subClassConstructor;
+}
+
+/**
+ * 读取键名
+ * 如：对象 object, 传入字符串 "a.b.c"，读取为 object[a][b][c]
+ */
+export function readKeyValue (object, keyNames) {
+  let target = object
+  keyNames.split('.').forEach((keyName) => {
+    target = target[keyName]
+  })
+  return target
+}
+
+/**
+ * 计算百分比
+ */
+export function setPercentageDefault (value, difference, min) {
+  return (value - min) / difference
 }
