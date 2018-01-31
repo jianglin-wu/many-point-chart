@@ -1,7 +1,7 @@
 {
-  "name": "Xmany",
-  "version": "1.0.0",
-  "description": "player",
+  "name": "many-point-chart",
+  "version": "1.0.1",
+  "description": "The many point canvas chart.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "scripts": {
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@gitee.com:lietu/Web-Player.git"
+    "url": "git@github.com:jianglin-wu/many-point-chart.git"
   },
   "author": "",
   "license": "MIT",
