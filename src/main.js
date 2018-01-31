@@ -1,6 +1,5 @@
-import { version, name } from '../package.json'
-import { logs } from './scripts/utils'
 import EventEmitter from './scripts/event-emitter.js'
+import { logs } from './scripts/utils'
 
 /**
  * 读取键名
@@ -118,10 +117,9 @@ function drawScale(ctx, location, parames) {
  */
 function singleChart(ctx, location, parames) {
   const { x, y, w, h } = location
-  const { topShow, bottomShow } = parames
+  const { topShow, bottomShow, gridSpacingY } = parames
   const lineWidth = 1
-  // 虚线行距
-  let gridSpacingY = 40
+  let thisGridSpacingY = gridSpacingY
 
   if (topShow || bottomShow) {
     ctx.setLineDash([])
@@ -141,12 +139,12 @@ function singleChart(ctx, location, parames) {
     ctx.stroke()
   }
 
-  const gridCount = parseInt(h / gridSpacingY, 10)
-  gridSpacingY += (h % gridSpacingY) / gridCount
+  const gridCount = parseInt(h / thisGridSpacingY, 10)
+  thisGridSpacingY += (h % thisGridSpacingY) / gridCount
   let gridTop = y
   ctx.beginPath()
   for (let i = 1; i < gridCount; i++) {
-    gridTop　+= gridSpacingY
+    gridTop　+= thisGridSpacingY
     ctx.strokeStyle = '#ccc'
     // ctx.strokeStyle = '#eee'
     // // 绘制圆点虚线
@@ -165,7 +163,7 @@ function singleChart(ctx, location, parames) {
  */
 function drawTables(ctx, location, parames) {
   const { x, y, w, h } = location
-  const { tables, offsetLeft, scaleTop } = parames
+  const { tables, offsetLeft, scaleTop, gridSpacingY } = parames
   const fontSize = 12
   const textWidth = offsetLeft * 0.8
   const tableHeight = h / tables.length
@@ -184,6 +182,7 @@ function drawTables(ctx, location, parames) {
         h: tableHeight,
       }, {
         topShow: index === 0,
+        gridSpacingY,
         bottomShow: index === tables.length - 1 ? lastBottomShow : true,
     })
   })
@@ -242,9 +241,28 @@ function drawTables(ctx, location, parames) {
 /**
  * 计算百分比
  */
-function setPercentageDefault(value, difference, min) {
+function setPercentageDefault (value, difference, min) {
   return (value - min) / difference
 }
+
+/**
+ * 事件是否在路径中
+ */
+function isInPath (ctx, e, type, parames) {
+  ctx.beginPath()
+  if (type === 'point') {
+    const { x, y, radius, radian } = parames
+    ctx.moveTo(x, y)
+    ctx.arc(x, y, radius, 0, radian, true)
+  } else if (type === 'rect') {
+    const { x, y, w, h } = parames
+    ctx.rect(x, y, w, h)
+  }
+  const ret = ctx.isPointInPath(e.offsetX, e.offsetY)
+  ctx.closePath()
+  return ret
+}
+
 
 class Xmany extends EventEmitter {
   constructor (el, config) {
@@ -254,6 +272,7 @@ class Xmany extends EventEmitter {
     this.data = null
     this.scaleList = null
     this.pointAllList = null
+    this.eventList = []
     this.config = config
     this.canvas = getCanvasElement(el)
     this.initCanvas()
@@ -280,10 +299,11 @@ class Xmany extends EventEmitter {
     }) => {
       return { title, keyName, height, lineWidth, strokeStyle, fillStyle }
     })(scale)
-    options.chart = (({ offsetLeft = 100, tables = [], tablesHeight = 0 }) => {
+    options.chart = (({ offsetLeft = 100, tables = [], tablesHeight = 0, gridSpacingY = 20 }) => {
       const newChart = {}
       newChart.offsetLeft = offsetLeft
       newChart.tablesHeight = tablesHeight
+      newChart.gridSpacingY = gridSpacingY
       newChart.tables = tables.map(({
         title = '表名', keyName = '', min = 0, max = 100,
         setPercentage = null, pointRadius = 6, pointRadian = 360 * Math.PI / 180,
@@ -304,6 +324,7 @@ class Xmany extends EventEmitter {
     this.setOptions(options)
     if (this.data) {
       this.clear()
+      this.removeEvents()
     }
     this.data = data
     this.layout()
@@ -313,9 +334,13 @@ class Xmany extends EventEmitter {
     const { ctx, config, options, data } = this
     const { width, height } = config
     const { scale, chart } = options
-    const { offsetLeft, tablesHeight, tables } = chart
+    const { offsetLeft, tablesHeight, tables, gridSpacingY } = chart
     const scaleHeight = scale.height
     const scaleTop = height - scaleHeight
+
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, width, height)
+
     this.scaleList = drawScale(ctx, {
         x: offsetLeft,
         y: height - scaleHeight,
@@ -333,167 +358,213 @@ class Xmany extends EventEmitter {
         offsetLeft,
         tables,
         scaleTop,
+        gridSpacingY,
     })(this.scaleList, data)
-    this.watchEvent()
-    this.addEvent()
+    this.watchEvents()
   }
 
+  /**
+   * 清除画板
+   */
   clear () {
     const ctx = this.ctx
     const { width, height } = this.config
     ctx.clearRect(0, 0, width, height)
   }
 
-  watchEvent () {
-    const canvas = this.canvas
+  /**
+   * 生成事件处理函数
+   */
+  generateEventListener (
+    eventName,
+    trigger,
+    tableTrigger,
+    axisXTrigger,
+    pointTrigger,
+    tableNoTrigger,
+    axisXNoTrigger,
+    pointNoTrigger,
+  ) {
     const ctx = this.ctx
+    const options = this.options
     const pointAllList = this.pointAllList
     const that = this
-    let isInPointPath = false
-    let isInAxisX = false
-    let isInTable = false
-    canvas.addEventListener('mouseenter', function(){
-      that.emit('mouseenter')
-    })
-    canvas.addEventListener('mousemove', function(e){
+    function eventListener (e) {
       let isThisInPointPath = false
       let isThisInAxisX = false
       let isThisInTable = false
-      that.emit('mousemove')
+
+      if (!trigger) {
+        return
+      }
+      trigger(e)
       pointAllList.forEach(({ pointList, chartY, tableHeight }, tableIndex) => {
         pointList.forEach(({ values, x, name, span }, xIndex) => {
           const pointListWidth = (pointList.length + 1) * span
+          const tableLocation = {
+            x: pointList[0].x - span,
+            y: chartY,
+            w: pointListWidth,
+            h: tableHeight,
+          }
+          const axisXLocation = {
+            x: x - (span / 2),
+            y: chartY,
+            w: span,
+            h: tableHeight,
+          }
+          if (isInPath(ctx, e, 'rect', tableLocation) && xIndex === 0 && tableTrigger) {
+            tableTrigger(e, tableLocation, { tableIndex })
+            isThisInTable = true
+          }
+          if (isInPath(ctx, e, 'rect', axisXLocation) && axisXTrigger) {
+            axisXTrigger(e, axisXLocation, { tableIndex, xIndex })
+            isThisInAxisX = true
+          }
           values.forEach(({ y }, valueIndex) => {
-            if(that.inPointPath(x, y, e.offsetX, e.offsetY, tableIndex)) {
-              if (isInPointPath) {
-                that.emit('pointMousemove', e, { x, y }, { tableIndex, xIndex, valueIndex })
-              } else {
-                that.emit('pointMouseenter', e, { x, y }, { tableIndex, xIndex, valueIndex })
-                isInPointPath = true
-              }
+            const tableOptions = options.chart.tables[tableIndex]
+            const pointLocation = {
+              x: x,
+              y: y,
+              radius: tableOptions.pointRadius,
+              radian: tableOptions.pointRadian,
+            }
+            const indexs = {
+              tableIndex,
+              xIndex,
+              valueIndex,
+            }
+            if(isInPath(ctx, e, 'point', pointLocation) && pointTrigger) {
+              pointTrigger(e, pointLocation, indexs)
               isThisInPointPath = true
-            }
-            if (that.inAxisX(x, chartY, span, tableHeight, e.offsetX, e.offsetY, tableIndex)) {
-              if (isInAxisX) {
-                that.emit(
-                  'axisXMousemove',
-                  e,
-                  { x, y: chartY, w: span, h: tableHeight },
-                  { tableIndex, xIndex },
-                )
-              } else {
-                that.emit(
-                  'axisXMouseenter',
-                  e,
-                  { x, y: chartY, w: span, h: tableHeight },
-                  { tableIndex, xIndex },
-                )
-                isInAxisX = true
-              }
-              isThisInAxisX = true
-            }
-            if (that.inTable(pointList[0].x - span, chartY, pointListWidth, tableHeight, e.offsetX, e.offsetY, tableIndex)) {
-              if (isInTable) {
-                that.emit(
-                  'tableMousemove',
-                  e,
-                  { x: pointList[0].x - span, y: chartY, w: pointListWidth, h: tableHeight },
-                  { tableIndex },
-                )
-              } else {
-                that.emit('tableMouseenter')
-                isInTable = true
-              }
-              isThisInTable = true
             }
           })
         })
       })
 
-      // 从内部移出
-      if (!isThisInPointPath && isInPointPath) {
+      // 当前事件没有在路径中触发
+      if (!isThisInTable && tableNoTrigger) {
+        tableNoTrigger(e)
+      }
+      if (!isThisInAxisX && axisXNoTrigger) {
+        axisXNoTrigger(e)
+      }
+      if (!isThisInPointPath && pointNoTrigger) {
+        pointNoTrigger(e)
+      }
+    }
+    this.eventList.push({ eventName, eventListener })
+    this.canvas.addEventListener(eventName, eventListener);
+    return eventListener
+  }
+
+  /**
+   * 注册监听事件
+   */
+  watchEvents () {
+    const that = this
+    let isInTable = false
+    let isInAxisX = false
+    let isInPointPath = false
+
+    // 注册移入事件
+    this.generateEventListener(
+      'mouseenter',
+      function mouseenter(e) {
+        that.emit('mouseenter', e)
+      }
+    )
+
+    // 注册移动事件
+    this.generateEventListener(
+      'mousemove',
+      function mousemove(e) {
+        that.emit('mousemove', e)
+      },
+      function tableMousemove(e, location, indexs) {
+        if (isInTable) {
+          that.emit('tableMousemove', e, location, indexs)
+        } else {
+          that.emit('tableMouseenter', e, location, indexs)
+          isInTable = true
+        }
+      },
+      function axisXMousemove(e, location, indexs) {
+        if (isInAxisX) {
+          that.emit('axisXMousemove', e, location, indexs)
+        } else {
+          that.emit('axisXMouseenter', e, location, indexs)
+          isInAxisX = true
+        }
+      },
+      function pointMousemove(e, location, indexs) {
+        if (isInPointPath) {
+          that.emit('pointMousemove', e, location, indexs)
+        } else {
+          that.emit('pointMouseenter', e, location, indexs)
+          isInPointPath = true
+        }
+      },
+      function tableMouseleave(e, indexs) {
+        if (isInTable) {
+          isInTable = false
+          that.emit('tableMouseleave')
+        }
+      },
+      function axisXMouseleave(e, indexs) {
+        if (isInAxisX) {
+          isInAxisX = false
+          that.emit('axisXMouseleave')
+        }
+      },
+      function pointMouseleave(e, indexs) {
+        if (isInPointPath) {
+          isInPointPath = false
+          that.emit('pointMouseleave')
+        }
+      },
+    )
+
+    // 注册移出事件
+    this.generateEventListener(
+      'mouseleave',
+      function mouseleave(e) {
+        that.emit('mouseleave', e)
         isInPointPath = false
-        that.emit('pointMouseleave')
-      }
-      if (!isThisInAxisX && isInAxisX) {
         isInAxisX = false
-        that.emit('axisXMouseleave')
-      }
-      if (!isThisInTable && isInTable) {
         isInTable = false
-        that.emit('tableMouseleave')
       }
-    });
+    )
 
-    canvas.addEventListener('mouseleave', function(){
-      that.emit('mouseleave')
-      isInPointPath = false
-      isInAxisX = false
-      isInTable = false
+    // 注册点击事件
+    this.generateEventListener(
+      'click',
+      function click(e) {
+        that.emit('click', e)
+      },
+      function tableClick(e, location, indexs) {
+        that.emit('tableClick', e, location, indexs)
+      },
+      function axisXClick(e, location, indexs) {
+        that.emit('axisXClick', e, location, indexs)
+      },
+      function pointClick(e, location, indexs) {
+        that.emit('pointClick', e, location, indexs)
+      },
+    )
+  }
+
+  /**
+   * 清除所有事件
+   */
+  removeEvents () {
+    const canvas = this.canvas
+    const eventList = this.eventList
+    eventList.forEach(({ eventName, eventListener }) => {
+      canvas.removeEventListener(eventName, eventListener)
     })
-  }
-
-  /**
-   * 坐标是否在绘制的坐标点上
-   * x1,y1 为点坐标位置
-   * x2,y2 为事件位置参数
-   */
-  inPointPath (x1, y1, x2, y2, tableIndex) {
-    const ctx = this.ctx
-    const { pointRadius, pointRadian } = this.options.chart.tables[tableIndex]
-    ctx.beginPath()
-    ctx.moveTo(x1, y1)
-    ctx.arc(x1, y1, pointRadius, 0, pointRadian, true)
-    const ret = ctx.isPointInPath(x2, y2)
-    ctx.closePath()
-    return ret
-  }
-
-  /**
-   * 坐标是否在 x 轴上
-   * x1,y1 为点坐标位置
-   * x2,y2 为事件位置参数
-   */
-  inAxisX (x1, y1, span, h, x2, y2, tableIndex) {
-    const ctx = this.ctx
-    ctx.beginPath()
-    ctx.rect(x1 - (span / 2), y1, span, h)
-    const ret = ctx.isPointInPath(x2, y2)
-    ctx.closePath()
-    return ret
-  }
-
-  /**
-   * 坐标是否单个表格中
-   * x1,y1 为点坐标位置
-   * x2,y2 为事件位置参数
-   */
-  inTable (x1, y1, w, h, x2, y2, tableIndex) {
-    const ctx = this.ctx
-    ctx.beginPath()
-    ctx.rect(x1, y1, w, h)
-    const ret = ctx.isPointInPath(x2, y2)
-    ctx.closePath()
-    return ret
-  }
-
-  addEvent () {
-    // this.on('pointMouseenter', () => {
-    //   this.canvas.style.cursor = 'pointer'
-    // })
-    // this.on('pointMouseleave', () => {
-    //   this.canvas.style.cursor = 'default'
-    // })
-    // this.on('pointMouseleave', () => {
-    //   this.ctx.beginPath()
-    //   this.ctx.moveTo(x, chartY)
-    //   this.ctx.lineTo(x, chartY + tableHeight)
-    //   this.ctx.stroke()
-    // })
+    this.eventList = []
   }
 }
-
-Xmany.prototype.name = name
-Xmany.prototype.version = version
 
 export default Xmany

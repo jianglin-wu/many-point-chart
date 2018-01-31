@@ -52,8 +52,7 @@
       <div class="content"></div>
     </div>
 	</div>
-  <!-- <script src="../../dist/index.js"></script> -->
-	<script src="./js/Xmany/index.js"></script>
+  <script src="../../dist/index.js"></script>
 	<script src="./js/mock.js"></script>
 	<script src="./js/data.js"></script>
 	<script>
@@ -66,6 +65,8 @@
 			},
 			// 图表
 			chart: {
+        // 虚线的行距
+        gridSpacingY: 20,
 				// 左偏移值
 				offsetLeft: 100,
 				// 图标高度
@@ -76,8 +77,8 @@
 				  	title: '弓网温度',
 				  	keyName: 'tempVals',
 				  	fillStyle: '#ff00ff',
-				  	strokeStyle: '#999',
-				  	pointRadius: 5,
+				  	strokeStyle: '#ff00ff',
+				  	pointRadius: 1,
 				  	min: 0,
 				  	max: 101,
 				  },
@@ -85,8 +86,8 @@
 				  	title: '弓网冲击加速度',
 				  	keyName: 'accelerations',
 				  	fillStyle: '#ff66ff',
-				  	strokeStyle: '#999',
-				  	pointRadius: 5,
+				  	strokeStyle: '#ff66ff',
+				  	pointRadius: 1,
 				  	min: 0,
 				  	max: 100,
 				  },
@@ -94,8 +95,8 @@
 				  	title: '弓网冲击力',
 				  	keyName: 'wallops',
 				  	fillStyle: '#ff6666',
-				  	strokeStyle: '#999',
-				  	pointRadius: 5,
+				  	strokeStyle: '#ff6666',
+				  	pointRadius: 1,
 				  	min: 0,
 				  	max: 100,
 				  },
@@ -135,6 +136,9 @@
     // });
     chart.on('axisXMouseout', hideEl);
     chart.on('tableMouseleave', hideEl);
+    chart.on('pointClick', function () {
+      console.log('pointClick')
+    });
 
     function hideEl() {
       hoverBg.style.display = 'none';

@@ -1,5 +1,5 @@
 var MockData = Mock.mock({
-  "content|20-30": [
+  "content|80": [
     {
       "pole": function() {
         var id = Mock.mock('@increment(100)');
