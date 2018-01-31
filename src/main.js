@@ -3,7 +3,7 @@ import { logs } from './scripts/utils'
 
 /**
  * 读取键名
- * 如：对象object, 键名"a.b.c" 读取为 object[a][b][c]
+ * 如：对象 object, 传入字符串 "a.b.c"，读取为 object[a][b][c]
  */
 function readKeyValue (object, keyNames) {
   let target = object
@@ -264,7 +264,7 @@ function isInPath (ctx, e, type, parames) {
 }
 
 
-class Xmany extends EventEmitter {
+export default class ManyPoint extends EventEmitter {
   constructor (el, config) {
     super()
     this.ctx = null
@@ -566,5 +566,3 @@ class Xmany extends EventEmitter {
     this.eventList = []
   }
 }
-
-export default Xmany

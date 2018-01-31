@@ -17,26 +17,21 @@ import replace from 'rollup-plugin-replace'
 import json from 'rollup-plugin-json'
 import babel from 'rollup-plugin-babel'
 import uglify from 'rollup-plugin-uglify'
-import { name, main, module } from './package.json'
+import { main, module } from './package.json'
 
+const name = 'manyPointChart'
 const entry = 'src/main.js'
 // const isProduction = process.env.NODE_ENV === 'production'
 
 export default [
   {
     input: entry,
-    output: [{
-      name: name,
+    output: {
+      name,
       file: main,
       format: 'umd',
       sourcemap: true,
     },
-    {
-      name: name,
-      file: module,
-      format: 'es',
-      sourcemap: true,
-    }],
     plugins: [
       builtins(),
       resolve(),
@@ -54,12 +49,37 @@ export default [
         ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
       }),
     ],
+  },
+  {
+    input: entry,
+    output: {
+      file: module,
+      format: 'es',
+      sourcemap: true,
+    },
+    plugins: [
+      builtins(),
+      resolve(),
+      commonjs(),
+      json(),
+      babel({
+        babelrc: false,
+        runtimeHelpers: true,
+        exclude: 'node_modules/**',
+        plugins: ['external-helpers'],
+        externalHelpers: true,
+      }),
+      replace({
+        exclude: 'node_modules/**',
+        ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
+      }),
+    ],
     external: ['loadsh'],
   },
   {
     input: entry,
     output: {
-      name: name,
+      name,
       file: `${main.slice(0, -2)}min.js`,
       format: 'umd',
       sourcemap: true,
@@ -80,8 +100,7 @@ export default [
         exclude: 'node_modules/**',
         ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
       }),
-      // uglify(),
+      uglify(),
     ],
-    external: ['loadsh'],
   },
 ]
