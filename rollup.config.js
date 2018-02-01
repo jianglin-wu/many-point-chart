@@ -19,7 +19,7 @@ import babel from 'rollup-plugin-babel'
 import uglify from 'rollup-plugin-uglify'
 import { main, module } from './package.json'
 
-const name = 'manyPointChart'
+const name = 'ManyPoint'
 const entry = 'src/main.js'
 const isProduction = process.env.NODE_ENV === 'production'
 
