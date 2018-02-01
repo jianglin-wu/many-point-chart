@@ -21,16 +21,16 @@ import { main, module } from './package.json'
 
 const name = 'manyPointChart'
 const entry = 'src/main.js'
-// const isProduction = process.env.NODE_ENV === 'production'
+const isProduction = process.env.NODE_ENV === 'production'
 
-export default [
+const rollupConfig = [
   {
     input: entry,
     output: {
       name,
       file: main,
       format: 'umd',
-      sourcemap: true,
+      sourcemap: !isProduction,
     },
     plugins: [
       builtins(),
@@ -42,7 +42,7 @@ export default [
         runtimeHelpers: true,
         exclude: 'node_modules/**',
         plugins: ['external-helpers'],
-        externalHelpers: true,
+        externalHelpers: !isProduction,
       }),
       replace({
         exclude: 'node_modules/**',
@@ -55,7 +55,7 @@ export default [
     output: {
       file: module,
       format: 'es',
-      sourcemap: true,
+      sourcemap: !isProduction,
     },
     plugins: [
       builtins(),
@@ -67,7 +67,7 @@ export default [
         runtimeHelpers: true,
         exclude: 'node_modules/**',
         plugins: ['external-helpers'],
-        externalHelpers: true,
+        externalHelpers: !isProduction,
       }),
       replace({
         exclude: 'node_modules/**',
@@ -82,7 +82,7 @@ export default [
       name,
       file: `${main.slice(0, -2)}min.js`,
       format: 'umd',
-      sourcemap: true,
+      sourcemap: !isProduction,
     },
     plugins: [
       builtins(),
@@ -94,7 +94,7 @@ export default [
         runtimeHelpers: true,
         exclude: 'node_modules/**',
         plugins: ['external-helpers'],
-        externalHelpers: true,
+        externalHelpers: !isProduction,
       }),
       replace({
         exclude: 'node_modules/**',
@@ -104,3 +104,6 @@ export default [
     ],
   },
 ]
+
+
+export default rollupConfig
