@@ -34,10 +34,9 @@ const chart = new ManyPoint('canvas-id', {
   width: 1200,
   height: 600,
 })
-chart.draw({
-    // options
-  },
-  data, // data
+chart.draw(
+  options, // 选项
+  data, // 数据
 )
 ```
 
