@@ -188,3 +188,13 @@ html 中使用
   * pointMousemove
   * pointMouseleave
 
+
+
+
+
+
+
+
+## License
+
+MIT
