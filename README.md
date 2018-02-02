@@ -3,7 +3,13 @@
 
 ## 简介
 
-本项目是一个支持Ｙ轴多个坐标点图表，它使用原生Canvas开发，使用Rollup打包。点击[示例](https://jianglin-wu.github.io/many-point-chart/)查看。
+说明：本项目是一个支持Ｙ轴多个坐标点图表，它使用原生Canvas开发，使用Rollup打包。
+
+示例：[查看地址](https://jianglin-wu.github.io/many-point-chart/)
+
+![图表示例](./src/static/img/example-1.png)
+
+
 
 
 
@@ -25,28 +31,14 @@ $ npm install many-point-chart
 <script src="lib/many-point-chart.min.js"></script>
 ```
 
-**使用**
-
-使用 ES6 方式使用:
-```javascript
-import ManyPoint from 'many-point-chart'
-const chart = new ManyPoint('canvas-id', {
-  width: 1200,
-  height: 600,
-})
-chart.draw(
-  options, // 选项
-  data, // 数据
-)
-```
 
 
+## 使用
 
+###　配置
 
+配置参数
 
-## 配置
-
-**options**
 ```javascript
 const options = {
   // 刻度栏
@@ -88,28 +80,108 @@ const options = {
 
 
 
-**data**
+数据的格式
 
 ```javascript
 const data = [
   {
     attribute: {
       keyName: 'name-1', // 每个刻度的名称
-    }
+    },
+    // 表格坐标值
+    tempVals: [
+      10,
+      80,
+      30,
+    ],
+    accelerations: [
+      88,
+      60,
+      70,
+      50,
+    ],
   },
-  // 表格坐标值
-  tempVals: [
-    10,
-    80,
-    30,
-  ],
-  accelerations: [
-    88,
-    60,
-    70,
-    50,
-  ],
+  // ……
 ]
 ```
 
+
+
+
+
+### 绘制图表
+
+ES6 方式使用:
+
+```javascript
+import ManyPoint from 'many-point-chart'
+const chart = new ManyPoint('canvas-id', {
+  width: 1200, // 画布宽度
+  height: 600,　// 画布高度
+})
+chart.draw(
+  options, // 选项
+  data, // 数据
+)
+```
+
+html 中使用
+
+```html
+<script>
+  // window.ManyPoint
+  var chart = new ManyPoint('canvas-id', {
+    // ……
+  });
+  chart.draw(options,data);
+</script>
+
+```
+
+
+
+### 方法
+
+* draw(options, data): 绘制图表，第一个参数为配置参数，第二个参数为传入的数据。
+* on(eventName, fn): 注册事件监听，第一个参数为事件名称，第二个参数为触发运行函数。
+* clear(): 清除画板。
+* removeEvents(): 清楚所有事件。
+
+
+
+### 事件
+
+canvas 事件：以下事件触发会传入原生的 event 参数。
+
+* click
+* mouseenter
+* mousemove
+* mouseleave
+
+
+
+单张图表事件：以下事件触发除 tableMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
+
+* tableClick
+* tableMouseenter
+* tableMousemove
+* tableMouseleave
+
+
+
+坐标轴事件：以下事件触发除 axisXMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
+
+* axisXClick
+* axisXMouseenter
+* axisXMousemove
+* axisXMouseleave
+
+
+
+坐标点事件：以下事件触发除 pointMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
+
+* pointClick
+* pointMouseenter
+* pointMousemove
+* pointMouseleave
 
