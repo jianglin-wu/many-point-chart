@@ -151,37 +151,40 @@ html 中使用
 
 ### 事件
 
-canvas 事件：以下事件触发会传入原生的 event 参数。
-
-* click
-* mouseenter
-* mousemove
-* mouseleave
-
-
-
-单张图表事件：以下事件触发除 tableMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
-
-* tableClick
-* tableMouseenter
-* tableMousemove
-* tableMouseleave
+* canvas 事件：以下事件触发会传入原生的 event 参数。
+  * click
+  * mouseenter
+  * mousemove
+  * mouseleave
 
 
 
-坐标轴事件：以下事件触发除 axisXMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
 
-* axisXClick
-* axisXMouseenter
-* axisXMousemove
-* axisXMouseleave
+* 单张图表事件：以下事件触发除 tableMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
+  * tableClick
+  * tableMouseenter
+  * tableMousemove
+  * tableMouseleave
 
 
 
-坐标点事件：以下事件触发除 pointMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
 
-* pointClick
-* pointMouseenter
-* pointMousemove
-* pointMouseleave
+
+
+* 坐标轴事件：以下事件触发除 axisXMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
+  * axisXClick
+  * axisXMouseenter
+  * axisXMousemove
+  * axisXMouseleave
+
+
+
+
+
+
+* 坐标点事件：以下事件触发除 pointMouseleave 外，其他事件接收三个参数（event, location, indexs），分别为 event 参数，位置信息，索引信息。
+  * pointClick
+  * pointMouseenter
+  * pointMousemove
+  * pointMouseleave
 
