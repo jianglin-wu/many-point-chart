@@ -35,7 +35,7 @@ $ npm install many-point-chart
 
 ## 使用
 
-###　配置
+### 配置
 
 配置参数
 
@@ -117,7 +117,7 @@ ES6 方式使用:
 import ManyPoint from 'many-point-chart'
 const chart = new ManyPoint('canvas-id', {
   width: 1200, // 画布宽度
-  height: 600,　// 画布高度
+  height: 600, // 画布高度
 })
 chart.draw(
   options, // 选项
