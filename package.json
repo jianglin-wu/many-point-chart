@@ -10,10 +10,7 @@
     "dev": "rollup -c -w",
     "lint": "eslint --ext .js src test"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:jianglin-wu/many-point-chart.git"
-  },
+  "repository": "https://github.com/jianglin-wu/many-point-chart.git",
   "author": "",
   "license": "MIT",
   "dependencies": {
