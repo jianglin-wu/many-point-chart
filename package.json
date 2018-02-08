@@ -1,6 +1,6 @@
 {
   "name": "many-point-chart",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "The many point canvas chart.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -13,10 +13,8 @@
   "repository": "https://github.com/jianglin-wu/many-point-chart.git",
   "author": "",
   "license": "MIT",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-    "rollup": "^0.52.2",
     "babel-core": "^6.26.0",
     "babel-eslint": "^8.0.3",
     "babel-plugin-external-helpers": "^6.22.0",
@@ -27,6 +25,7 @@
     "eslint-plugin-node": "^5.2.1",
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
+    "rollup": "^0.52.2",
     "rollup-plugin-babel": "^3.0.3",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-json": "^2.3.0",
