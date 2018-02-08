@@ -68,7 +68,7 @@ export function drawScale(ctx, location, parames) {
     const startY = y + lineWidth
     const surplusH = h - lineWidth
     const scaleHeight = surplusH * 0.3
-    const fontSize = surplusH * 0.5
+    const fontSize = surplusH * 0.3
     const textTop = startY + scaleHeight + (surplusH * 0.2) + fontSize
     const scaleCount = data.length
     let span = w / (scaleCount + 1)

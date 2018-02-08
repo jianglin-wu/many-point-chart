@@ -21,7 +21,8 @@ import { main, module } from './package.json'
 
 const name = 'ManyPoint'
 const entry = 'src/main.js'
-const isProduction = process.env.NODE_ENV === 'production'
+const isProduction = true
+// const isProduction = process.env.NODE_ENV === 'production'
 
 const rollupConfig = [
   {
