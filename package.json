@@ -1,6 +1,6 @@
 {
   "name": "many-point-chart",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "The many point canvas chart.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
